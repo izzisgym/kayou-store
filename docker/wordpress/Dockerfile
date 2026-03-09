@@ -1,16 +1,21 @@
-FROM wordpress:6-apache
+FROM --platform=linux/amd64 wordpress:6-apache
 
-# Fix Apache config
+ARG CACHE_BUST=4
+
+# Fix server name
 RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
 
-# Disable conflicting MPM modules - keep only mpm_prefork
-RUN a2dismod mpm_event mpm_worker 2>/dev/null; a2enmod mpm_prefork 2>/dev/null; true
+# Disable ALL MPM modules then re-enable only prefork to prevent conflicts
+RUN set -ex; \
+    a2dismod mpm_event || true; \
+    a2dismod mpm_worker || true; \
+    a2enmod mpm_prefork; \
+    # Verify only one MPM is enabled
+    ls /etc/apache2/mods-enabled/ | grep mpm
 
-# Verify no MPM conflict at build time
-RUN apache2 -t 2>&1 | grep -v "More than one" || true
-
-# Wrap apache2-foreground so it remaps PORT before starting
-RUN mv /usr/local/bin/apache2-foreground /usr/local/bin/apache2-foreground-orig
-RUN printf '#!/bin/sh\nAPP_PORT="${PORT:-80}"\nif [ "$APP_PORT" != "80" ]; then\nsed -i "s/Listen 80/Listen ${APP_PORT}/" /etc/apache2/ports.conf\nsed -i "s/<VirtualHost \\*:80>/<VirtualHost *:${APP_PORT}>/" /etc/apache2/sites-enabled/000-default.conf\nfi\nexec /usr/local/bin/apache2-foreground-orig "$@"\n' > /usr/local/bin/apache2-foreground && chmod +x /usr/local/bin/apache2-foreground
+# Replace apache2-foreground to support Railway's $PORT env var
+RUN printf '#!/bin/sh\nset -e\nPORT="${PORT:-80}"\nsed -i "s/^Listen .*/Listen ${PORT}/" /etc/apache2/ports.conf\nsed -i "s/<VirtualHost \\*:[0-9]*>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-enabled/000-default.conf\necho "Starting Apache on port ${PORT}"\nexec apache2 -D FOREGROUND\n' \
+    > /usr/local/bin/apache2-foreground && \
+    chmod +x /usr/local/bin/apache2-foreground
 
 EXPOSE 80
