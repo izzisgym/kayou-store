@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 
 import { env, readRequired } from "@/lib/env";
+import { generateEbayListingCopy } from "@/lib/openai";
 import { getMetaValue } from "@/lib/woocommerce";
 import type { WooProduct } from "@/lib/woocommerce";
 
@@ -125,10 +126,30 @@ export async function verifyEbayNotificationSignature(
 
 export async function relistProductOnEbay(product: WooProduct, availableQuantity: number) {
   const sku = product.sku;
-  const title = product.name;
-  const description =
-    product.short_description || product.description || product.name;
   const price = product.regular_price || product.price || "0.00";
+
+  // Priority: manual meta override → AI-generated → raw WooCommerce fields
+  const manualTitle = getMetaValue(product, "_kayou_ebay_title");
+  const manualDescription = getMetaValue(product, "_kayou_ebay_description");
+
+  let title: string;
+  let description: string;
+
+  if (manualTitle && manualDescription) {
+    title = manualTitle.slice(0, 80);
+    description = manualDescription;
+  } else if (env.openaiApiKey) {
+    const generated = await generateEbayListingCopy(product);
+    title = manualTitle ? manualTitle.slice(0, 80) : generated.title;
+    description = manualDescription ?? generated.description;
+  } else {
+    title = (manualTitle ?? product.name).slice(0, 80);
+    description =
+      manualDescription ||
+      product.short_description ||
+      product.description ||
+      product.name;
+  }
 
   await ebayRequest(
     "PUT",
