@@ -29,6 +29,7 @@ export function readNumber(name: string, fallback: number): number {
 export const env = {
   appUrl: readOptional("APP_URL"),
   openaiApiKey: readOptional("OPENAI_API_KEY"),
+  anthropicApiKey: readOptional("ANTHROPIC_API_KEY"),
   syncSharedSecret: readOptional("SYNC_SHARED_SECRET"),
   wcBaseUrl: readOptional("WC_BASE_URL"),
   wcConsumerKey: readOptional("WC_CONSUMER_KEY"),

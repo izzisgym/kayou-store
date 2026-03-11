@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { env } from "@/lib/env";
-import { generateEbayListingCopy } from "@/lib/openai";
+import { generateEbayListingCopy } from "@/lib/claude";
 import { getProductBySku } from "@/lib/woocommerce";
 
 export async function POST(request: NextRequest) {
@@ -21,9 +21,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing sku" }, { status: 400 });
   }
 
-  if (!env.openaiApiKey) {
+  if (!env.anthropicApiKey) {
     return NextResponse.json(
-      { error: "OPENAI_API_KEY is not configured on the sync app" },
+      { error: "ANTHROPIC_API_KEY is not configured on the sync app" },
       { status: 503 },
     );
   }

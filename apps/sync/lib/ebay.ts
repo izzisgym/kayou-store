@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 import { env, readRequired } from "@/lib/env";
-import { generateEbayListingCopy } from "@/lib/openai";
+import { generateEbayListingCopy } from "@/lib/claude";
 import { getMetaValue } from "@/lib/woocommerce";
 import type { WooProduct } from "@/lib/woocommerce";
 
@@ -138,7 +138,7 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
   if (manualTitle && manualDescription) {
     title = manualTitle.slice(0, 80);
     description = manualDescription;
-  } else if (env.openaiApiKey) {
+  } else if (env.anthropicApiKey) {
     const generated = await generateEbayListingCopy(product);
     title = manualTitle ? manualTitle.slice(0, 80) : generated.title;
     description = manualDescription ?? generated.description;
