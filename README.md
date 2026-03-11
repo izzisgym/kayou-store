@@ -1,6 +1,13 @@
 # Kayou Card Marketplace
 
-A headless WooCommerce storefront for Kayou Trading Cards (My Little Pony & Naruto), built with Next.js 15 and deployed on Railway.
+WooCommerce-based Kayou Trading Card store infrastructure, plus a standalone
+Next.js sync service for eBay sale relisting.
+
+## Current services
+
+- `docker/wordpress/` - WordPress + WooCommerce on Railway
+- `apps/sync/` - Next.js webhook/sync service for eBay sale handling
+- `import_cards.py` - bulk WooCommerce importer for set lists
 
 ## Features
 
