@@ -1,6 +1,6 @@
 FROM --platform=linux/amd64 wordpress:6-apache
 
-ARG CACHE_BUST=21
+ARG CACHE_BUST=22
 
 ENV KAYOU_SYNC_URL=https://sync-production-44fe.up.railway.app
 
@@ -336,11 +336,12 @@ function kayou_ebay_metabox_html($post) {
 }
 PHP
 
-# Inject KAYOU_SYNC_URL and KAYOU_SYNC_SECRET into wp-config.php if set
+# Inject KAYOU_SYNC_URL and KAYOU_SYNC_SECRET into wp-config.php at runtime
 SYNC_URL="${KAYOU_SYNC_URL:-https://sync-production-44fe.up.railway.app}"
+SYNC_SECRET=$(printenv KAYOU_SYNC_SECRET || true)
 if [ -f /var/www/html/wp-config.php ]; then
     if ! grep -q 'KAYOU_SYNC_URL' /var/www/html/wp-config.php; then
-        sed -i "s|/\* That's all, stop editing! \*/|define('KAYOU_SYNC_URL', '${SYNC_URL}');\ndefine('KAYOU_SYNC_SECRET', '${KAYOU_SYNC_SECRET:-}');\n/* That's all, stop editing! */|" /var/www/html/wp-config.php
+        sed -i "s|/\* That's all, stop editing! \*/|define('KAYOU_SYNC_URL', '${SYNC_URL}');\ndefine('KAYOU_SYNC_SECRET', '${SYNC_SECRET}');\n/* That's all, stop editing! */|" /var/www/html/wp-config.php
     fi
 fi
 
