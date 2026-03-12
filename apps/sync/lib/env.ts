@@ -37,6 +37,8 @@ export const env = {
   ebayClientId: readOptional("EBAY_CLIENT_ID"),
   ebayClientSecret: readOptional("EBAY_CLIENT_SECRET"),
   ebayMarketplaceId: readOptional("EBAY_MARKETPLACE_ID") ?? "EBAY_US",
+  bestOfferAutoAcceptPrice: readOptional("EBAY_BEST_OFFER_AUTO_ACCEPT_PRICE"),
+  bestOfferAutoDeclinePrice: readOptional("EBAY_BEST_OFFER_AUTO_DECLINE_PRICE"),
   ebayCategoryId: readOptional("EBAY_CATEGORY_ID"),
   ebayMerchantLocationKey: readOptional("EBAY_MERCHANT_LOCATION_KEY"),
   ebayFulfillmentPolicyId: readOptional("EBAY_FULFILLMENT_POLICY_ID"),

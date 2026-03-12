@@ -181,6 +181,13 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
         value: price,
         currency: "USD",
       },
+      bestOfferEnabled: true,
+      ...(env.bestOfferAutoAcceptPrice && {
+        bestOfferAutoAcceptPrice: { value: env.bestOfferAutoAcceptPrice, currency: "USD" },
+      }),
+      ...(env.bestOfferAutoDeclinePrice && {
+        bestOfferAutoDeclinePrice: { value: env.bestOfferAutoDeclinePrice, currency: "USD" },
+      }),
     },
     listingPolicies: {
       fulfillmentPolicyId: readRequired("EBAY_FULFILLMENT_POLICY_ID"),
