@@ -273,7 +273,11 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
       product: {
         title,
         description,
-        aspects: {},
+        aspects: {
+          Franchise: [franchise],
+          Brand: ["Kayou"],
+          Type: ["Trading Card"],
+        },
       },
     },
     true,
@@ -288,15 +292,6 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
     conditionId: "3000",
     merchantLocationKey: readRequired("EBAY_MERCHANT_LOCATION_KEY"),
     listingDescription: description,
-    // Item specifics required by eBay for Non-Sport Trading Cards (183050)
-    itemSpecifics: {
-      namePValuePairs: [
-        { name: "Franchise", value: [franchise] },
-        { name: "Brand", value: ["Kayou"] },
-        { name: "Type", value: ["Trading Card"] },
-        { name: "Condition", value: ["Near Mint or Better"] },
-      ],
-    },
     pricingSummary: {
       price: {
         value: price,
