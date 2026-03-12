@@ -255,6 +255,11 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
       product.name;
   }
 
+  // Derive franchise from WooCommerce categories for eBay item specifics
+  const franchise =
+    product.categories?.find((c) => c.name.toLowerCase() !== "uncategorized")?.name ??
+    "Kayou Trading Cards";
+
   await ebayRequest(
     "PUT",
     `/sell/inventory/v1/inventory_item/${encodeURIComponent(sku)}`,
@@ -283,6 +288,15 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
     conditionId: "3000",
     merchantLocationKey: readRequired("EBAY_MERCHANT_LOCATION_KEY"),
     listingDescription: description,
+    // Item specifics required by eBay for Non-Sport Trading Cards (183050)
+    itemSpecifics: {
+      namePValuePairs: [
+        { name: "Franchise", value: [franchise] },
+        { name: "Brand", value: ["Kayou"] },
+        { name: "Type", value: ["Trading Card"] },
+        { name: "Condition", value: ["Near Mint or Better"] },
+      ],
+    },
     pricingSummary: {
       price: {
         value: price,
