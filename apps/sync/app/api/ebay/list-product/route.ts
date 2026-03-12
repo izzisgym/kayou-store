@@ -39,22 +39,27 @@ export async function POST(request: NextRequest) {
 
   const existingListingId = getMetaValue(product, "_kayou_ebay_listing_id");
 
-  const ebayResult = await relistProductOnEbay(product, product.stock_quantity ?? 0);
+  try {
+    const ebayResult = await relistProductOnEbay(product, product.stock_quantity ?? 0);
 
-  await updateProductSyncMeta(product, {
-    _kayou_ebay_offer_id: ebayResult.offerId,
-    _kayou_ebay_listing_id: ebayResult.listingId,
-    _kayou_ebay_listing_url: ebayResult.listingUrl,
-    _kayou_ebay_last_synced_at: new Date().toISOString(),
-  });
+    await updateProductSyncMeta(product, {
+      _kayou_ebay_offer_id: ebayResult.offerId,
+      _kayou_ebay_listing_id: ebayResult.listingId,
+      _kayou_ebay_listing_url: ebayResult.listingUrl,
+      _kayou_ebay_last_synced_at: new Date().toISOString(),
+    });
 
-  return NextResponse.json({
-    ok: true,
-    sku: product.sku,
-    productId: product.id,
-    offerId: ebayResult.offerId,
-    listingId: ebayResult.listingId,
-    listingUrl: ebayResult.listingUrl,
-    wasRelisted: Boolean(existingListingId),
-  });
+    return NextResponse.json({
+      ok: true,
+      sku: product.sku,
+      productId: product.id,
+      offerId: ebayResult.offerId,
+      listingId: ebayResult.listingId,
+      listingUrl: ebayResult.listingUrl,
+      wasRelisted: Boolean(existingListingId),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
 }
