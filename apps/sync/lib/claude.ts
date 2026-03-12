@@ -26,7 +26,8 @@ ${product.description ? `WooCommerce description: ${product.description}` : ""}
 
 Rules for the title:
 - Maximum 80 characters (hard limit — eBay will reject longer titles)
-- Include the full card name, rarity/variant in brackets if present in the name (e.g. [SGR], [LSR], [UR])
+- MUST include the full SKU exactly as provided: ${product.sku}
+- Include the full card name and rarity/variant in brackets if present in the name (e.g. [SGR], [LSR], [UR])
 - Include the brand/series if identifiable from the name or SKU (e.g. Kayou, Kung Fu Panda)
 - Include condition: "Near Mint" or "NM"
 - No special characters that eBay disallows (no: !, @, $, *, /, \\, <, >)
@@ -55,7 +56,12 @@ Respond with valid JSON only, no commentary:
     ? (JSON.parse(jsonMatch[0]) as { title?: string; description?: string })
     : {};
 
-  const title = (parsed.title ?? product.name).slice(0, 80);
+  const rawTitle = parsed.title ?? product.name;
+  // Ensure SKU is always present — append if Claude dropped it
+  const titleWithSku = rawTitle.includes(product.sku)
+    ? rawTitle
+    : `${rawTitle} ${product.sku}`;
+  const title = titleWithSku.slice(0, 80);
   const description =
     parsed.description ||
     product.short_description ||
