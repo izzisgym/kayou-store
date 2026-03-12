@@ -15,6 +15,8 @@ export async function generateEbayListingCopy(
 ): Promise<{ title: string; description: string }> {
   const client = getClient();
 
+  const categories = (product.categories ?? []).map((c) => c.name);
+
   const prompt = `You are an expert eBay listing copywriter specializing in trading cards.
 
 Generate an eBay listing title and HTML description for the following trading card product.
@@ -22,20 +24,23 @@ Generate an eBay listing title and HTML description for the following trading ca
 Product name: ${product.name}
 SKU: ${product.sku}
 Price: $${product.regular_price || product.price || "0.00"}
+Brand: Kayou
+Categories: ${categories.length > 0 ? categories.join(", ") : "Trading Card"}
 ${product.description ? `WooCommerce description: ${product.description}` : ""}
 
 Rules for the title:
 - Maximum 80 characters (hard limit — eBay will reject longer titles)
 - MUST include the full SKU exactly as provided: ${product.sku}
-- Include the full card name and rarity/variant in brackets if present in the name (e.g. [SGR], [LSR], [UR])
-- Include the brand/series if identifiable from the name or SKU (e.g. Kayou, Kung Fu Panda)
-- Include condition: "Near Mint" or "NM"
+- MUST include "Kayou" as the brand
+- MUST include the series/franchise category (e.g. My Little Pony, Kung Fu Panda) from the categories above
+- Include the card name and rarity/variant in brackets if present in the name (e.g. [SGR], [LSR], [UR], [SC])
+- Include condition: "NM" (Near Mint)
 - No special characters that eBay disallows (no: !, @, $, *, /, \\, <, >)
 
 Rules for the description:
 - Return clean HTML (no markdown)
 - 2–4 short paragraphs
-- Lead with the card name, rarity, and series
+- Lead with the card name, rarity, series/franchise (${categories[0] ?? "Trading Card"}), and brand (Kayou)
 - Mention condition (Near Mint / NM), that it ships in a protective sleeve, and fast shipping
 - End with a brief trust statement
 

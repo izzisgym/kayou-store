@@ -6,6 +6,11 @@ export type WooMeta = {
   value: string;
 };
 
+export type WooCategory = {
+  id: number;
+  name: string;
+};
+
 export type WooProduct = {
   id: number;
   name: string;
@@ -17,6 +22,7 @@ export type WooProduct = {
   description?: string;
   short_description?: string;
   meta_data?: WooMeta[];
+  categories?: WooCategory[];
 };
 
 function getAuthHeader() {
