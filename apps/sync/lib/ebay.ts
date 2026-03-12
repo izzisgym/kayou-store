@@ -156,10 +156,6 @@ export async function searchSoldListings(keywords: string, limit = 3): Promise<S
     { cache: "no-store" },
   );
 
-  if (!response.ok) {
-    throw new Error(`eBay Finding API error ${response.status}`);
-  }
-
   const json = (await response.json()) as {
     errorMessage?: Array<{ error?: Array<{ message?: string[] }> }>;
     findCompletedItemsResponse?: Array<{
