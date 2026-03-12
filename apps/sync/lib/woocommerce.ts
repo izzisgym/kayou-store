@@ -23,6 +23,7 @@ export type WooProduct = {
   short_description?: string;
   meta_data?: WooMeta[];
   categories?: WooCategory[];
+  images?: Array<{ src: string }>;
 };
 
 function getAuthHeader() {

@@ -271,6 +271,15 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
     ? "https://api.sandbox.ebay.com/ws/api.dll"
     : "https://api.ebay.com/ws/api.dll";
 
+  // Build picture URLs from WooCommerce product images
+  const pictureXml =
+    product.images && product.images.length > 0
+      ? `<PictureDetails>${product.images
+          .slice(0, 12)
+          .map((img) => `<PictureURL>${escapeXml(img.src)}</PictureURL>`)
+          .join("")}</PictureDetails>`
+      : "";
+
   // Build item specifics XML
   const itemSpecificsXml = `
     <ItemSpecifics>
@@ -305,26 +314,26 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
     <CategoryMappingAllowed>true</CategoryMappingAllowed>
     <Country>US</Country>
     <Currency>USD</Currency>
+    <Location>Los Angeles, CA</Location>
+    <PostalCode>90001</PostalCode>
     <ConditionID>4000</ConditionID>
     <ConditionDescription>Near Mint - never played, handled with care</ConditionDescription>
     <ListingDuration>GTC</ListingDuration>
     <ListingType>FixedPriceItem</ListingType>
     <Quantity>${availableQuantity}</Quantity>
     <SKU>${escapeXml(sku)}</SKU>
-    <ShippingDetails>
-      <ShippingServiceOptions>
-        <ShippingServicePriority>1</ShippingServicePriority>
-        <ShippingService>USPSFirstClass</ShippingService>
-        <ShippingServiceCost>3.99</ShippingServiceCost>
-      </ShippingServiceOptions>
-    </ShippingDetails>
-    <DispatchTimeMax>2</DispatchTimeMax>
-    <ReturnPolicy>
-      <ReturnsAcceptedOption>ReturnsAccepted</ReturnsAcceptedOption>
-      <RefundOption>MoneyBack</RefundOption>
-      <ReturnsWithinOption>Days_30</ReturnsWithinOption>
-      <ShippingCostPaidByOption>Buyer</ShippingCostPaidByOption>
-    </ReturnPolicy>
+    <SellerProfiles>
+      <SellerShippingProfile>
+        <ShippingProfileID>${fulfillmentPolicyId}</ShippingProfileID>
+      </SellerShippingProfile>
+      <SellerPaymentProfile>
+        <PaymentProfileID>${paymentPolicyId}</PaymentProfileID>
+      </SellerPaymentProfile>
+      <SellerReturnProfile>
+        <ReturnProfileID>${returnPolicyId}</ReturnProfileID>
+      </SellerReturnProfile>
+    </SellerProfiles>
+    ${pictureXml}
     ${itemSpecificsXml}
     ${bestOfferXml}
   </Item>
