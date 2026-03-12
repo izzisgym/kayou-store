@@ -30,21 +30,22 @@ ${product.description ? `WooCommerce description: ${product.description}` : ""}
 
 Rules for the title:
 - Maximum 80 characters (hard limit — eBay will reject longer titles)
-- MUST follow this exact format: {Card Name} {Rarity} {SKU} Kayou {Franchise} English
-- Example: "Rarity SGR MLPME02-SGR-005L5 Kayou My Little Pony English"
+- MUST follow this exact format: {Card Name} {Rarity} Kayou {Franchise} English {SKU}
+- Example: "Rarity SGR Kayou My Little Pony English MLPME02-SGR-005L5"
 - Card Name = the name of the card (e.g. "Rarity", "Sunset Shimmer", "Scootaloo")
-- Rarity = the rarity code from the product name in brackets without brackets (e.g. SGR, LSR, UR, SC, R)
-- SKU = the full SKU exactly as provided: ${product.sku}
+- Rarity = the rarity code from the product name without brackets (e.g. SGR, LSR, UR, SC, R)
 - Franchise = the series/franchise (e.g. My Little Pony, Kung Fu Panda) from the categories above
-- No condition abbreviation, no special characters that eBay disallows (no: !, @, $, *, /, \\, <, >)
+- SKU = the full SKU exactly as provided: ${product.sku}
+- No special characters that eBay disallows (no: !, @, $, *, /, \\, <, >)
 - If the result exceeds 80 characters, shorten the card name only — never cut the SKU
 
 Rules for the description:
 - Return clean HTML (no markdown)
-- 2–4 short paragraphs
-- Lead with the card name, rarity, series/franchise (${categories[0] ?? "Trading Card"}), and brand (Kayou)
-- Mention condition (Near Mint / NM), that it ships in a protective sleeve, and fast shipping
-- End with a brief trust statement
+- Casual, friendly tone — like a collector talking to another collector, not a formal product listing
+- 2–3 short paragraphs, keep it brief
+- Mention the card name, rarity, and franchise naturally
+- One line about condition (Near Mint, ships in a sleeve) and fast shipping
+- No corporate language, no "trust statements", no filler phrases like "Buy with confidence" or "We are committed to"
 
 Respond with valid JSON only, no commentary:
 {"title": "...", "description": "..."}`;
