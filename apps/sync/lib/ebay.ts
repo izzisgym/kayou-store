@@ -32,19 +32,24 @@ async function getAccessToken(useUserToken = false) {
   const clientSecret = readRequired("EBAY_CLIENT_SECRET");
   const basicAuth = `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`;
 
+  // Read refresh token at call time (not module load time) to avoid caching issues
+  const refreshToken = process.env["EBAY_REFRESH_TOKEN"];
+  console.log("[ebay] getAccessToken useUserToken=%s hasRefreshToken=%s", useUserToken, Boolean(refreshToken));
+
   // Use refresh token for sell API calls if available
-  if (useUserToken && env.ebayRefreshToken) {
+  if (useUserToken && refreshToken) {
+    const params = new URLSearchParams();
+    params.append("grant_type", "refresh_token");
+    params.append("refresh_token", refreshToken);
+    params.append("scope", SELL_SCOPES);
+
     const response = await fetch(`${ebayBaseUrl()}/identity/v1/oauth2/token`, {
       method: "POST",
       headers: {
         Authorization: basicAuth,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: env.ebayRefreshToken,
-        scope: SELL_SCOPES,
-      }),
+      body: params.toString(),
       cache: "no-store",
     });
 
