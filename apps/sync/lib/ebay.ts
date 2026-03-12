@@ -304,7 +304,7 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
     <eBayAuthToken>${token}</eBayAuthToken>
   </RequesterCredentials>
   <ErrorLanguage>en_US</ErrorLanguage>
-  <WarningLevel>High</WarningLevel>
+  <WarningLevel>Low</WarningLevel>
   <Item>
     ${listingIdXml}
     <Title>${escapeXml(title)}</Title>
@@ -365,6 +365,12 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
     throw new Error(
       `eBay Trading API error: ${errorMessages.join("; ") || "Unknown error"}\n\nFull response: ${xml.slice(0, 500)}`,
     );
+  }
+
+  // Log any warnings but continue
+  if (ack === "Warning" || ack === "PartialFailure") {
+    const warnings = [...xml.matchAll(/<ShortMessage>(.*?)<\/ShortMessage>/g)].map((m) => m[1]);
+    console.warn("[ebay] Trading API warnings:", warnings.join("; "));
   }
 
   const listingId = xml.match(/<ItemID>(.*?)<\/ItemID>/)?.[1] ?? "";
