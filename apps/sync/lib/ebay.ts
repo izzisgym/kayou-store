@@ -262,7 +262,10 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
 
   const existingListingId = getMetaValue(product, "_kayou_ebay_listing_id");
   const categoryId = readRequired("EBAY_CATEGORY_ID");
-  const fulfillmentPolicyId = readRequired("EBAY_FULFILLMENT_POLICY_ID");
+  const fulfillmentPolicyId =
+    parseFloat(price) >= 20
+      ? "260497901017"
+      : readRequired("EBAY_FULFILLMENT_POLICY_ID");
   const paymentPolicyId = readRequired("EBAY_PAYMENT_POLICY_ID");
   const returnPolicyId = readRequired("EBAY_RETURN_POLICY_ID");
 
