@@ -26,19 +26,45 @@ function ebayBaseUrl() {
   return env.ebaySandbox ? "https://api.sandbox.ebay.com" : "https://api.ebay.com";
 }
 
-async function getAccessToken() {
+async function getAccessToken(useUserToken = false) {
   const clientId = readRequired("EBAY_CLIENT_ID");
   const clientSecret = readRequired("EBAY_CLIENT_SECRET");
+  const basicAuth = `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`;
 
+  // Use refresh token for sell API calls if available
+  if (useUserToken && env.ebayRefreshToken) {
+    const response = await fetch(`${ebayBaseUrl()}/identity/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        Authorization: basicAuth,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: env.ebayRefreshToken,
+        scope: SELL_SCOPES,
+      }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`eBay token error ${response.status}`);
+    }
+
+    const json = (await response.json()) as { access_token: string };
+    return json.access_token;
+  }
+
+  // Fall back to client credentials for public scopes
   const response = await fetch(`${ebayBaseUrl()}/identity/v1/oauth2/token`, {
     method: "POST",
     headers: {
-      Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
+      Authorization: basicAuth,
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
       grant_type: "client_credentials",
-      scope: SELL_SCOPES,
+      scope: "https://api.ebay.com/oauth/api_scope",
     }),
     cache: "no-store",
   });
@@ -55,8 +81,9 @@ async function ebayRequest<T>(
   method: string,
   path: string,
   body?: unknown,
+  useUserToken = false,
 ): Promise<T> {
-  const token = await getAccessToken();
+  const token = await getAccessToken(useUserToken);
   const response = await fetch(`${ebayBaseUrl()}${path}`, {
     method,
     headers: {
@@ -232,6 +259,7 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
         description,
       },
     },
+    true,
   );
 
   const offerBody = {
@@ -266,15 +294,17 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
 
   let offer: EbayOffer;
   if (existingOfferId) {
-    await ebayRequest("PUT", `/sell/inventory/v1/offer/${existingOfferId}`, offerBody);
+    await ebayRequest("PUT", `/sell/inventory/v1/offer/${existingOfferId}`, offerBody, true);
     offer = { offerId: existingOfferId };
   } else {
-    offer = await ebayRequest<EbayOffer>("POST", "/sell/inventory/v1/offer", offerBody);
+    offer = await ebayRequest<EbayOffer>("POST", "/sell/inventory/v1/offer", offerBody, true);
   }
 
   const published = await ebayRequest<EbayOffer>(
     "POST",
     `/sell/inventory/v1/offer/${offer.offerId}/publish`,
+    undefined,
+    true,
   );
 
   return {

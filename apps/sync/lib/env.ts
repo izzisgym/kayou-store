@@ -49,6 +49,8 @@ export const env = {
   ),
   ebayValidateSignature: readBoolean("EBAY_VALIDATE_SIGNATURE", false),
   ebaySandbox: readBoolean("EBAY_SANDBOX", false),
+  ebayRefreshToken: readOptional("EBAY_REFRESH_TOKEN"),
+  ebayRuName: readOptional("EBAY_RUNAME"),
   mysqlHost: readOptional("MYSQLHOST"),
   mysqlPort: readNumber("MYSQLPORT", 3306),
   mysqlUser: readOptional("MYSQLUSER"),
