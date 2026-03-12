@@ -119,6 +119,15 @@ function kayou_ebay_metabox_html($post) {
                 Save Copy
             </button>
 
+            <button type="button" id="kayou-sold-prices-btn" class="button" style="width:100%;margin-bottom:6px;"
+                data-sku="<?php echo esc_attr($sku); ?>"
+                data-sync-url="<?php echo esc_attr($sync_url); ?>"
+                data-secret="<?php echo esc_attr($secret); ?>">
+                Check Sold Prices
+            </button>
+
+            <div id="kayou-sold-results" style="display:none;margin-bottom:8px;font-size:12px;"></div>
+
             <button type="button" id="kayou-ebay-list-btn" class="button button-primary" style="width:100%;"
                 data-sku="<?php echo esc_attr($sku); ?>"
                 data-sync-url="<?php echo esc_attr($sync_url); ?>"
@@ -219,8 +228,70 @@ function kayou_ebay_metabox_html($post) {
             });
         }
 
-        if (listBtn) {
-            listBtn.addEventListener('click', function () {
+        var soldBtn     = document.getElementById('kayou-sold-prices-btn');
+        var soldResults = document.getElementById('kayou-sold-results');
+
+        if (soldBtn && soldResults) {
+            soldBtn.addEventListener('click', function () {
+                soldBtn.disabled = true;
+                soldBtn.textContent = 'Searching…';
+                soldResults.style.display = 'none';
+                soldResults.innerHTML = '';
+
+                fetch(soldBtn.dataset.syncUrl + '/api/ebay/sold-prices', {
+                    method: 'POST',
+                    headers: syncHeaders(soldBtn.dataset.secret),
+                    body: JSON.stringify({ sku: soldBtn.dataset.sku })
+                })
+                .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+                .then(function (res) {
+                    soldBtn.disabled = false;
+                    soldBtn.textContent = 'Check Sold Prices';
+
+                    if (!res.ok || !res.d.ok) {
+                        soldResults.style.display = 'block';
+                        soldResults.innerHTML = '<span style="color:#c00;">Error: ' + (res.d.error || 'Unknown') + '</span>';
+                        return;
+                    }
+
+                    var items = res.d.results || [];
+                    if (items.length === 0) {
+                        soldResults.style.display = 'block';
+                        soldResults.innerHTML = '<em style="color:#888;">No recent sold listings found.</em>';
+                        return;
+                    }
+
+                    var html = '<table style="width:100%;border-collapse:collapse;margin-top:4px;">'
+                             + '<tr style="background:#f0f0f0;">'
+                             + '<th style="padding:3px 4px;text-align:left;font-size:11px;">Title</th>'
+                             + '<th style="padding:3px 4px;text-align:right;font-size:11px;white-space:nowrap;">Price</th>'
+                             + '<th style="padding:3px 4px;text-align:right;font-size:11px;white-space:nowrap;">Date</th>'
+                             + '</tr>';
+
+                    items.forEach(function (item) {
+                        var date = item.soldDate ? new Date(item.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '';
+                        var title = item.title.length > 40 ? item.title.slice(0, 40) + '…' : item.title;
+                        html += '<tr style="border-top:1px solid #ddd;">'
+                              + '<td style="padding:3px 4px;font-size:11px;"><a href="' + item.url + '" target="_blank">' + title + '</a></td>'
+                              + '<td style="padding:3px 4px;font-size:11px;text-align:right;color:#3a9c3a;font-weight:600;">$' + parseFloat(item.soldPrice).toFixed(2) + '</td>'
+                              + '<td style="padding:3px 4px;font-size:11px;text-align:right;color:#888;">' + date + '</td>'
+                              + '</tr>';
+                    });
+
+                    html += '</table>';
+                    soldResults.innerHTML = html;
+                    soldResults.style.display = 'block';
+                })
+                .catch(function (e) {
+                    soldBtn.disabled = false;
+                    soldBtn.textContent = 'Check Sold Prices';
+                    soldResults.style.display = 'block';
+                    soldResults.innerHTML = '<span style="color:#c00;">Request failed: ' + e.message + '</span>';
+                });
+            });
+        }
+
+        if (listBtn) {            listBtn.addEventListener('click', function () {
                 listBtn.disabled = true;
                 listBtn.textContent = 'Listing…';
                 setStatus('Sending to eBay…', '#555');

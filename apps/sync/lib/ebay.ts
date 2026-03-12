@@ -124,6 +124,66 @@ export async function verifyEbayNotificationSignature(
   );
 }
 
+export type SoldListing = {
+  title: string;
+  soldPrice: string;
+  soldDate: string;
+  url: string;
+};
+
+export async function searchSoldListings(keywords: string, limit = 3): Promise<SoldListing[]> {
+  const clientId = readRequired("EBAY_CLIENT_ID");
+
+  const params = new URLSearchParams({
+    "OPERATION-NAME": "findCompletedItems",
+    "SERVICE-VERSION": "1.0.0",
+    "SECURITY-APPNAME": clientId,
+    "RESPONSE-DATA-FORMAT": "JSON",
+    "REST-PAYLOAD": "",
+    "GLOBAL-ID": "EBAY-US",
+    keywords,
+    "itemFilter(0).name": "SoldItemsOnly",
+    "itemFilter(0).value": "true",
+    "itemFilter(1).name": "LocatedIn",
+    "itemFilter(1).value": "US",
+    sortOrder: "EndTimeSoonest",
+    "paginationInput.entriesPerPage": String(limit),
+    "paginationInput.pageNumber": "1",
+  });
+
+  const response = await fetch(
+    `https://svcs.ebay.com/services/search/FindingService/v1?${params.toString()}`,
+    { cache: "no-store" },
+  );
+
+  if (!response.ok) {
+    throw new Error(`eBay Finding API error ${response.status}`);
+  }
+
+  const json = (await response.json()) as {
+    findCompletedItemsResponse?: Array<{
+      searchResult?: Array<{
+        item?: Array<{
+          title?: string[];
+          sellingStatus?: Array<{ currentPrice?: Array<{ __value__?: string }> }>;
+          listingInfo?: Array<{ endTime?: string[] }>;
+          viewItemURL?: string[];
+        }>;
+      }>;
+    }>;
+  };
+
+  const items =
+    json.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item ?? [];
+
+  return items.slice(0, limit).map((item) => ({
+    title: item.title?.[0] ?? "",
+    soldPrice: item.sellingStatus?.[0]?.currentPrice?.[0]?.__value__ ?? "0.00",
+    soldDate: item.listingInfo?.[0]?.endTime?.[0] ?? "",
+    url: item.viewItemURL?.[0] ?? "",
+  }));
+}
+
 export async function relistProductOnEbay(product: WooProduct, availableQuantity: number) {
   const sku = product.sku;
   const price = product.regular_price || product.price || "0.00";
