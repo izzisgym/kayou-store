@@ -30,7 +30,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const results = await searchSoldListings(product.name, 3);
-
-  return NextResponse.json({ ok: true, results });
+  try {
+    const results = await searchSoldListings(product.name, 3);
+    return NextResponse.json({ ok: true, results });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
 }

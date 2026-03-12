@@ -161,7 +161,10 @@ export async function searchSoldListings(keywords: string, limit = 3): Promise<S
   }
 
   const json = (await response.json()) as {
+    errorMessage?: Array<{ error?: Array<{ message?: string[] }> }>;
     findCompletedItemsResponse?: Array<{
+      ack?: string[];
+      errorMessage?: Array<{ error?: Array<{ message?: string[] }> }>;
       searchResult?: Array<{
         item?: Array<{
           title?: string[];
@@ -173,8 +176,15 @@ export async function searchSoldListings(keywords: string, limit = 3): Promise<S
     }>;
   };
 
-  const items =
-    json.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item ?? [];
+  // Surface any top-level or response-level errors
+  const topError = json.errorMessage?.[0]?.error?.[0]?.message?.[0];
+  if (topError) throw new Error(`eBay Finding API: ${topError}`);
+
+  const responseRoot = json.findCompletedItemsResponse?.[0];
+  const responseError = responseRoot?.errorMessage?.[0]?.error?.[0]?.message?.[0];
+  if (responseError) throw new Error(`eBay Finding API: ${responseError}`);
+
+  const items = responseRoot?.searchResult?.[0]?.item ?? [];
 
   return items.slice(0, limit).map((item) => ({
     title: item.title?.[0] ?? "",
