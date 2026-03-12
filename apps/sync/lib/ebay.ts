@@ -277,6 +277,7 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
           Franchise: [franchise],
           Brand: ["Kayou"],
           Type: ["Trading Card"],
+          Grade: ["Ungraded"],
         },
       },
     },
