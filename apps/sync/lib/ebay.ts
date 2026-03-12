@@ -269,7 +269,7 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
           quantity: availableQuantity,
         },
       },
-      condition: "LIKE_NEW",
+      condition: "USED_VERY_GOOD",
       product: {
         title,
         description,
@@ -277,7 +277,6 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
           Franchise: [franchise],
           Brand: ["Kayou"],
           Type: ["Trading Card"],
-          Grade: ["Ungraded"],
         },
       },
     },
@@ -290,7 +289,7 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
     format: "FIXED_PRICE",
     availableQuantity: availableQuantity,
     categoryId: readRequired("EBAY_CATEGORY_ID"),
-    conditionId: "3000",
+    conditionId: "4000",
     merchantLocationKey: readRequired("EBAY_MERCHANT_LOCATION_KEY"),
     listingDescription: description,
     pricingSummary: {
