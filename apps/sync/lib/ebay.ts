@@ -305,10 +305,26 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
 
   const existingOfferId = getMetaValue(product, "_kayou_ebay_offer_id");
 
+  // Also check eBay directly for an offer on this SKU in case WC meta is stale
+  let resolvedOfferId = existingOfferId;
+  if (!resolvedOfferId) {
+    try {
+      const offersResponse = await ebayRequest<{ offers?: Array<{ offerId: string }> }>(
+        "GET",
+        `/sell/inventory/v1/offer?sku=${encodeURIComponent(sku)}`,
+        undefined,
+        true,
+      );
+      resolvedOfferId = offersResponse.offers?.[0]?.offerId;
+    } catch {
+      // No offer found — will create a new one
+    }
+  }
+
   let offer: EbayOffer;
-  if (existingOfferId) {
-    await ebayRequest("PUT", `/sell/inventory/v1/offer/${existingOfferId}`, offerBody, true);
-    offer = { offerId: existingOfferId };
+  if (resolvedOfferId) {
+    await ebayRequest("PUT", `/sell/inventory/v1/offer/${resolvedOfferId}`, offerBody, true);
+    offer = { offerId: resolvedOfferId };
   } else {
     offer = await ebayRequest<EbayOffer>("POST", "/sell/inventory/v1/offer", offerBody, true);
   }
