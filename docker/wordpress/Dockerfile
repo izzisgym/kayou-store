@@ -1,8 +1,13 @@
 FROM --platform=linux/amd64 wordpress:6-apache
 
-ARG CACHE_BUST=23
+ARG CACHE_BUST=24
 
 RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
+
+# Install WP-CLI
+RUN curl -sO https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
+    && chmod +x wp-cli.phar \
+    && mv wp-cli.phar /usr/local/bin/wp
 
 # Keep upload limits modest but usable for theme/plugin uploads.
 RUN { \
