@@ -323,8 +323,8 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
     <CategoryMappingAllowed>true</CategoryMappingAllowed>
     <Country>US</Country>
     <Currency>USD</Currency>
-    <Location>Los Angeles, CA</Location>
-    <PostalCode>90001</PostalCode>
+    <Location>Sioux Falls, SD</Location>
+    <PostalCode>57101</PostalCode>
     <ConditionID>4000</ConditionID>
     <ConditionDescription>Near Mint - never played, handled with care</ConditionDescription>
     <ListingDuration>GTC</ListingDuration>
