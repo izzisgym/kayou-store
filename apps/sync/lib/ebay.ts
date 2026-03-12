@@ -285,10 +285,18 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
     <ItemSpecifics>
       <NameValueList><Name>Franchise</Name><Value>${escapeXml(franchise)}</Value></NameValueList>
       <NameValueList><Name>Brand</Name><Value>Kayou</Value></NameValueList>
-      <NameValueList><Name>Card Condition</Name><Value>Near Mint or Better</Value></NameValueList>
-      <NameValueList><Name>Condition</Name><Value>Near Mint or Better</Value></NameValueList>
-      <NameValueList><Name>Type</Name><Value>Trading Card</Value></NameValueList>
+      <NameValueList><Name>Type</Name><Value>Non-Sport Trading Card</Value></NameValueList>
     </ItemSpecifics>`;
+
+  // Condition Descriptors — required for trading card categories (183050, 183454, 261328)
+  // For ungraded cards: descriptor 40001 (Card Condition), value 400010 = "Near Mint or Better"
+  const conditionDescriptorsXml = `
+    <ConditionDescriptors>
+      <ConditionDescriptor>
+        <Name>40001</Name>
+        <Value>400010</Value>
+      </ConditionDescriptor>
+    </ConditionDescriptors>`;
 
   // Best offer settings
   const bestOfferXml = `
@@ -336,6 +344,7 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
     </SellerProfiles>
     ${pictureXml}
     ${itemSpecificsXml}
+    ${conditionDescriptorsXml}
     ${bestOfferXml}
   </Item>
 </${callName}Request>`;
