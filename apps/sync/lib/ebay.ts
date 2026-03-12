@@ -268,6 +268,7 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
       product: {
         title,
         description,
+        aspects: {},
       },
     },
     true,
