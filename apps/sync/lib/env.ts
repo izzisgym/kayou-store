@@ -51,6 +51,7 @@ export const env = {
   ebaySandbox: readBoolean("EBAY_SANDBOX", false),
   ebayRefreshToken: readOptional("EBAY_REFRESH_TOKEN"),
   ebayRuName: readOptional("EBAY_RUNAME"),
+  ebayDevId: readOptional("EBAY_DEV_ID"),
   mysqlHost: readOptional("MYSQLHOST"),
   mysqlPort: readNumber("MYSQLPORT", 3306),
   mysqlUser: readOptional("MYSQLUSER"),

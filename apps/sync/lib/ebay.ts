@@ -260,95 +260,122 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
     product.categories?.find((c) => c.name.toLowerCase() !== "uncategorized")?.name ??
     "Kayou Trading Cards";
 
-  await ebayRequest(
-    "PUT",
-    `/sell/inventory/v1/inventory_item/${encodeURIComponent(sku)}`,
-    {
-      availability: {
-        shipToLocationAvailability: {
-          quantity: availableQuantity,
-        },
-      },
-      condition: "USED_VERY_GOOD",
-      product: {
-        title,
-        description,
-        aspects: {
-          Franchise: [franchise],
-          Brand: ["Kayou"],
-          Type: ["Trading Card"],
-          "Card Condition": ["Near Mint or Better"],
-        },
-      },
-    },
-    true,
-  );
+  const existingListingId = getMetaValue(product, "_kayou_ebay_listing_id");
+  const categoryId = readRequired("EBAY_CATEGORY_ID");
+  const fulfillmentPolicyId = readRequired("EBAY_FULFILLMENT_POLICY_ID");
+  const paymentPolicyId = readRequired("EBAY_PAYMENT_POLICY_ID");
+  const returnPolicyId = readRequired("EBAY_RETURN_POLICY_ID");
 
-  const offerBody = {
-    sku,
-    marketplaceId: env.ebayMarketplaceId,
-    format: "FIXED_PRICE",
-    availableQuantity: availableQuantity,
-    categoryId: readRequired("EBAY_CATEGORY_ID"),
-    conditionId: "4000",
-    merchantLocationKey: readRequired("EBAY_MERCHANT_LOCATION_KEY"),
-    listingDescription: description,
-    pricingSummary: {
-      price: {
-        value: price,
-        currency: "USD",
-      },
-      bestOfferEnabled: true,
-      ...(env.bestOfferAutoAcceptPrice && {
-        bestOfferAutoAcceptPrice: { value: env.bestOfferAutoAcceptPrice, currency: "USD" },
-      }),
-      ...(env.bestOfferAutoDeclinePrice && {
-        bestOfferAutoDeclinePrice: { value: env.bestOfferAutoDeclinePrice, currency: "USD" },
-      }),
-    },
-    listingPolicies: {
-      fulfillmentPolicyId: readRequired("EBAY_FULFILLMENT_POLICY_ID"),
-      paymentPolicyId: readRequired("EBAY_PAYMENT_POLICY_ID"),
-      returnPolicyId: readRequired("EBAY_RETURN_POLICY_ID"),
-    },
-  };
+  const token = await getAccessToken(true);
+  const tradingBaseUrl = env.ebaySandbox
+    ? "https://api.sandbox.ebay.com/ws/api.dll"
+    : "https://api.ebay.com/ws/api.dll";
 
-  const existingOfferId = getMetaValue(product, "_kayou_ebay_offer_id");
+  // Build item specifics XML
+  const itemSpecificsXml = `
+    <ItemSpecifics>
+      <NameValueList><Name>Franchise</Name><Value>${escapeXml(franchise)}</Value></NameValueList>
+      <NameValueList><Name>Brand</Name><Value>Kayou</Value></NameValueList>
+      <NameValueList><Name>Card Condition</Name><Value>Near Mint or Better</Value></NameValueList>
+      <NameValueList><Name>Type</Name><Value>Trading Card</Value></NameValueList>
+    </ItemSpecifics>`;
 
-  // Also check eBay directly for an offer on this SKU in case WC meta is stale
-  let resolvedOfferId = existingOfferId;
-  if (!resolvedOfferId) {
-    try {
-      const offersResponse = await ebayRequest<{ offers?: Array<{ offerId: string }> }>(
-        "GET",
-        `/sell/inventory/v1/offer?sku=${encodeURIComponent(sku)}`,
-        undefined,
-        true,
-      );
-      resolvedOfferId = offersResponse.offers?.[0]?.offerId;
-    } catch {
-      // No offer found — will create a new one
-    }
+  // Best offer settings
+  const bestOfferXml = `
+    <BestOfferDetails>
+      <BestOfferEnabled>true</BestOfferEnabled>
+    </BestOfferDetails>`;
+
+  const callName = existingListingId ? "ReviseFixedPriceItem" : "AddFixedPriceItem";
+  const listingIdXml = existingListingId ? `<ItemID>${existingListingId}</ItemID>` : "";
+
+  const xmlBody = `<?xml version="1.0" encoding="utf-8"?>
+<${callName}Request xmlns="urn:ebay:apis:eBLBaseComponents">
+  <RequesterCredentials>
+    <eBayAuthToken>${token}</eBayAuthToken>
+  </RequesterCredentials>
+  <ErrorLanguage>en_US</ErrorLanguage>
+  <WarningLevel>High</WarningLevel>
+  <Item>
+    ${listingIdXml}
+    <Title>${escapeXml(title)}</Title>
+    <Description>${escapeXml(description)}</Description>
+    <PrimaryCategory><CategoryID>${categoryId}</CategoryID></PrimaryCategory>
+    <StartPrice>${price}</StartPrice>
+    <CategoryMappingAllowed>true</CategoryMappingAllowed>
+    <Country>US</Country>
+    <Currency>USD</Currency>
+    <ConditionID>4000</ConditionID>
+    <ConditionDescription>Near Mint - never played, handled with care</ConditionDescription>
+    <ListingDuration>GTC</ListingDuration>
+    <ListingType>FixedPriceItem</ListingType>
+    <Quantity>${availableQuantity}</Quantity>
+    <SKU>${escapeXml(sku)}</SKU>
+    <ShippingDetails>
+      <ShippingServiceOptions>
+        <ShippingServicePriority>1</ShippingServicePriority>
+        <ShippingService>USPSFirstClass</ShippingService>
+        <ShippingServiceCost>3.99</ShippingServiceCost>
+      </ShippingServiceOptions>
+    </ShippingDetails>
+    <DispatchTimeMax>2</DispatchTimeMax>
+    <ReturnPolicy>
+      <ReturnsAcceptedOption>ReturnsAccepted</ReturnsAcceptedOption>
+      <RefundOption>MoneyBack</RefundOption>
+      <ReturnsWithinOption>Days_30</ReturnsWithinOption>
+      <ShippingCostPaidByOption>Buyer</ShippingCostPaidByOption>
+    </ReturnPolicy>
+    ${itemSpecificsXml}
+    ${bestOfferXml}
+  </Item>
+</${callName}Request>`;
+
+  const response = await fetch(tradingBaseUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/xml",
+      "X-EBAY-API-SITEID": "0",
+      "X-EBAY-API-COMPATIBILITY-LEVEL": "967",
+      "X-EBAY-API-CALL-NAME": callName,
+      "X-EBAY-API-APP-NAME": readRequired("EBAY_CLIENT_ID"),
+      "X-EBAY-API-DEV-NAME": readRequired("EBAY_DEV_ID"),
+      "X-EBAY-API-CERT-NAME": readRequired("EBAY_CLIENT_SECRET"),
+    },
+    body: xmlBody,
+    cache: "no-store",
+  });
+
+  const xml = await response.text();
+
+  // Parse out Ack and errors
+  const ack = xml.match(/<Ack>(.*?)<\/Ack>/)?.[1] ?? "Failure";
+  if (ack === "Failure") {
+    const errorMessages = [...xml.matchAll(/<LongMessage>(.*?)<\/LongMessage>/g)].map(
+      (m) => m[1],
+    );
+    throw new Error(
+      `eBay Trading API error: ${errorMessages.join("; ") || "Unknown error"}\n\nFull response: ${xml.slice(0, 500)}`,
+    );
   }
 
-  let offer: EbayOffer;
-  if (resolvedOfferId) {
-    await ebayRequest("PUT", `/sell/inventory/v1/offer/${resolvedOfferId}`, offerBody, true);
-    offer = { offerId: resolvedOfferId };
-  } else {
-    offer = await ebayRequest<EbayOffer>("POST", "/sell/inventory/v1/offer", offerBody, true);
-  }
+  const listingId = xml.match(/<ItemID>(.*?)<\/ItemID>/)?.[1] ?? "";
+  const listingUrl = listingId
+    ? `https://www.ebay.com/itm/${listingId}`
+    : "";
 
-  const published = await ebayRequest<EbayOffer>(
-    "POST",
-    `/sell/inventory/v1/offer/${offer.offerId}/publish`,
-    undefined,
-    true,
-  );
-
+  // For the offer ID we return the listing ID (Trading API doesn't have offer IDs)
   return {
-    offerId: published.offerId ?? offer.offerId,
-    listingId: published.listingId ?? offer.listingId ?? "",
-    listingUrl: published.listingUri ?? offer.listingUri ?? "",
+    offerId: listingId,
+    listingId,
+    listingUrl,
   };
+}
+
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
