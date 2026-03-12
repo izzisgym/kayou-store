@@ -286,6 +286,7 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
       <NameValueList><Name>Franchise</Name><Value>${escapeXml(franchise)}</Value></NameValueList>
       <NameValueList><Name>Brand</Name><Value>Kayou</Value></NameValueList>
       <NameValueList><Name>Card Condition</Name><Value>Near Mint or Better</Value></NameValueList>
+      <NameValueList><Name>Condition</Name><Value>Near Mint or Better</Value></NameValueList>
       <NameValueList><Name>Type</Name><Value>Trading Card</Value></NameValueList>
     </ItemSpecifics>`;
 
