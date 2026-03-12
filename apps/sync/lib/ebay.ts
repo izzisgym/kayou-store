@@ -97,6 +97,7 @@ async function ebayRequest<T>(
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      "Accept-Language": "en-US",
     },
     body: body === undefined ? undefined : JSON.stringify(body),
     cache: "no-store",
