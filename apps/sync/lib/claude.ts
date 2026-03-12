@@ -30,12 +30,14 @@ ${product.description ? `WooCommerce description: ${product.description}` : ""}
 
 Rules for the title:
 - Maximum 80 characters (hard limit — eBay will reject longer titles)
-- MUST include the full SKU exactly as provided: ${product.sku}
-- MUST include "Kayou" as the brand
-- MUST include the series/franchise category (e.g. My Little Pony, Kung Fu Panda) from the categories above
-- Include the card name and rarity/variant in brackets if present in the name (e.g. [SGR], [LSR], [UR], [SC])
-- Include condition: "NM" (Near Mint)
-- No special characters that eBay disallows (no: !, @, $, *, /, \\, <, >)
+- MUST follow this exact format: {Card Name} {Rarity} {SKU} Kayou {Franchise} English
+- Example: "Rarity SGR MLPME02-SGR-005L5 Kayou My Little Pony English"
+- Card Name = the name of the card (e.g. "Rarity", "Sunset Shimmer", "Scootaloo")
+- Rarity = the rarity code from the product name in brackets without brackets (e.g. SGR, LSR, UR, SC, R)
+- SKU = the full SKU exactly as provided: ${product.sku}
+- Franchise = the series/franchise (e.g. My Little Pony, Kung Fu Panda) from the categories above
+- No condition abbreviation, no special characters that eBay disallows (no: !, @, $, *, /, \\, <, >)
+- If the result exceeds 80 characters, shorten the card name only — never cut the SKU
 
 Rules for the description:
 - Return clean HTML (no markdown)
