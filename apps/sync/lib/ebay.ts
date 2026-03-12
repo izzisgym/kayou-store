@@ -264,7 +264,7 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
           quantity: availableQuantity,
         },
       },
-      condition: "NEW",
+      condition: "LIKE_NEW",
       product: {
         title,
         description,
@@ -280,7 +280,7 @@ export async function relistProductOnEbay(product: WooProduct, availableQuantity
     format: "FIXED_PRICE",
     availableQuantity: availableQuantity,
     categoryId: readRequired("EBAY_CATEGORY_ID"),
-    conditionId: "1000",
+    conditionId: "3000",
     merchantLocationKey: readRequired("EBAY_MERCHANT_LOCATION_KEY"),
     listingDescription: description,
     pricingSummary: {
