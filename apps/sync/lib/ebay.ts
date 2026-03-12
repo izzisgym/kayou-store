@@ -17,6 +17,7 @@ type PublicKeyResponse = {
 };
 
 const SELL_SCOPES = [
+  "https://api.ebay.com/oauth/api_scope",
   "https://api.ebay.com/oauth/api_scope/sell.inventory",
   "https://api.ebay.com/oauth/api_scope/sell.fulfillment",
   "https://api.ebay.com/oauth/api_scope/sell.account",
@@ -48,7 +49,8 @@ async function getAccessToken(useUserToken = false) {
     });
 
     if (!response.ok) {
-      throw new Error(`eBay token error ${response.status}`);
+      const errBody = await response.text().catch(() => "");
+      throw new Error(`eBay token error ${response.status}: ${errBody}`);
     }
 
     const json = (await response.json()) as { access_token: string };
@@ -70,7 +72,8 @@ async function getAccessToken(useUserToken = false) {
   });
 
   if (!response.ok) {
-    throw new Error(`eBay token error ${response.status}`);
+    const errBody = await response.text().catch(() => "");
+    throw new Error(`eBay token error ${response.status}: ${errBody}`);
   }
 
   const json = (await response.json()) as { access_token: string };
@@ -95,7 +98,8 @@ async function ebayRequest<T>(
   });
 
   if (!response.ok) {
-    throw new Error(`eBay API error ${response.status}`);
+    const errBody = await response.text().catch(() => "");
+    throw new Error(`eBay API error ${response.status} on ${method} ${path}: ${errBody}`);
   }
 
   if (response.status === 204) {
